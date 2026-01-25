@@ -80,9 +80,11 @@ shared/           # Shared code between client/server
 
 ### Testing
 
-- Jest with jest-expo preset
+- Jest with jest-expo preset for unit tests
 - Tests located in `client/__tests__/`
 - Mocks for AsyncStorage
+- E2E tests: Playwright-based tests covering all core user flows
+- Custom ConfirmModal component used instead of Alert.alert for web compatibility
 
 ## External Dependencies
 
