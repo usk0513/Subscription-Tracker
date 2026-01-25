@@ -9,6 +9,8 @@ Key features:
 - View monthly total spending prominently
 - Filter subscriptions by category
 - Add, edit, and delete subscriptions
+- Preset service selection with plans (Netflix, Spotify, ChatGPT, Claude, etc.)
+- Manual entry option for custom subscriptions
 - Dark/light theme support
 
 ## User Preferences
