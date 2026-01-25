@@ -22,7 +22,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useCreateSubscription, useUpdateSubscription, useSubscription } from "@/hooks/useSubscriptions";
 import { Spacing, BorderRadius, Categories, CategoryColors } from "@/constants/theme";
-import { presetServices, PresetService, ServicePlan, servicesByCategory } from "@/constants/presetServices";
+import { presetServices, PresetService, ServicePlan } from "@/constants/presets";
 import type { BillingCycle, CategoryId, SubscriptionInput } from "@/types/subscription";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
