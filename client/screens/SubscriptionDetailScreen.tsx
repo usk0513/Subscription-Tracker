@@ -1,5 +1,5 @@
-import React, { useCallback } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert, Linking } from "react-native";
+import React, { useCallback, useState } from "react";
+import { View, StyleSheet, ScrollView, Pressable, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -10,6 +10,7 @@ import * as WebBrowser from "expo-web-browser";
 
 import { ThemedText } from "@/components/ThemedText";
 import { CategoryBadge } from "@/components/CategoryBadge";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { useTheme } from "@/hooks/useTheme";
 import { useSubscription, useDeleteSubscription } from "@/hooks/useSubscriptions";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
@@ -61,6 +62,7 @@ export default function SubscriptionDetailScreen() {
   const { id } = route.params;
   const { data: subscription, isLoading } = useSubscription(id);
   const deleteMutation = useDeleteSubscription();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const handleEdit = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -85,28 +87,19 @@ export default function SubscriptionDetailScreen() {
   
   const handleDelete = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    
-    Alert.alert(
-      "削除の確認",
-      `「${subscription?.name}」を削除しますか？この操作は取り消せません。`,
-      [
-        { text: "キャンセル", style: "cancel" },
-        {
-          text: "削除",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteMutation.mutateAsync(id);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              navigation.goBack();
-            } catch (error) {
-              Alert.alert("エラー", "削除に失敗しました");
-            }
-          },
-        },
-      ]
-    );
-  }, [subscription?.name, deleteMutation, id, navigation]);
+    setShowDeleteModal(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    try {
+      await deleteMutation.mutateAsync(id);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowDeleteModal(false);
+      navigation.goBack();
+    } catch (error) {
+      setShowDeleteModal(false);
+    }
+  }, [deleteMutation, id, navigation]);
   
   if (isLoading || !subscription) {
     return (
@@ -245,6 +238,17 @@ export default function SubscriptionDetailScreen() {
           </ThemedText>
         </Pressable>
       </View>
+
+      <ConfirmModal
+        visible={showDeleteModal}
+        title="削除の確認"
+        message={`「${subscription.name}」を削除しますか？この操作は取り消せません。`}
+        confirmText="削除"
+        cancelText="キャンセル"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setShowDeleteModal(false)}
+        destructive
+      />
     </ScrollView>
   );
 }
