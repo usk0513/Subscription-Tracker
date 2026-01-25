@@ -1,30 +1,54 @@
 import { Platform } from "react-native";
 
-const tintColorLight = "#007AFF";
-const tintColorDark = "#0A84FF";
+const primaryColor = "#1A1A2E";
+const accentColor = "#FF6B6B";
 
 export const Colors = {
   light: {
-    text: "#11181C",
+    text: "#1A1A2E",
+    textSecondary: "#6B6B7B",
+    textTertiary: "#9B9BA8",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
-    link: "#007AFF",
-    backgroundRoot: "#FFFFFF", // Elevation 0
-    backgroundDefault: "#F2F2F2", // Elevation 1
-    backgroundSecondary: "#E6E6E6", // Elevation 2
-    backgroundTertiary: "#D9D9D9", // Elevation 3
+    tabIconDefault: "#9B9BA8",
+    tabIconSelected: primaryColor,
+    link: primaryColor,
+    accent: accentColor,
+    backgroundRoot: "#FAFAFA",
+    backgroundDefault: "#FFFFFF",
+    backgroundSecondary: "#F5F5F5",
+    backgroundTertiary: "#EFEFEF",
+    border: "#E8E8E8",
+    success: "#4CAF50",
+    warning: "#FFA726",
+    error: "#FF6B6B",
+    categoryEntertainment: "#9B59B6",
+    categoryWork: "#3498DB",
+    categoryHealth: "#27AE60",
+    categoryEducation: "#F39C12",
+    categoryOther: "#95A5A6",
   },
   dark: {
     text: "#ECEDEE",
+    textSecondary: "#A0A0AA",
+    textTertiary: "#6B6B7B",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
-    link: "#0A84FF",
-    backgroundRoot: "#1F2123", // Elevation 0
-    backgroundDefault: "#2A2C2E", // Elevation 1
-    backgroundSecondary: "#353739", // Elevation 2
-    backgroundTertiary: "#404244", // Elevation 3
+    tabIconDefault: "#6B6B7B",
+    tabIconSelected: "#FFFFFF",
+    link: "#FF6B6B",
+    accent: accentColor,
+    backgroundRoot: "#121218",
+    backgroundDefault: "#1E1E26",
+    backgroundSecondary: "#2A2A34",
+    backgroundTertiary: "#36363F",
+    border: "#36363F",
+    success: "#4CAF50",
+    warning: "#FFA726",
+    error: "#FF6B6B",
+    categoryEntertainment: "#9B59B6",
+    categoryWork: "#3498DB",
+    categoryHealth: "#27AE60",
+    categoryEducation: "#F39C12",
+    categoryOther: "#95A5A6",
   },
 };
 
@@ -54,6 +78,11 @@ export const BorderRadius = {
 };
 
 export const Typography = {
+  display: {
+    fontSize: 48,
+    lineHeight: 56,
+    fontWeight: "700" as const,
+  },
   h1: {
     fontSize: 32,
     lineHeight: 40,
@@ -84,6 +113,11 @@ export const Typography = {
     lineHeight: 20,
     fontWeight: "400" as const,
   },
+  caption: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "500" as const,
+  },
   link: {
     fontSize: 16,
     lineHeight: 24,
@@ -91,15 +125,35 @@ export const Typography = {
   },
 };
 
+export const Shadows = {
+  card: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  cardHover: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  fab: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+};
+
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: "ui-monospace",
   },
   default: {
@@ -116,3 +170,19 @@ export const Fonts = Platform.select({
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });
+
+export const CategoryColors: Record<string, string> = {
+  entertainment: Colors.light.categoryEntertainment,
+  work: Colors.light.categoryWork,
+  health: Colors.light.categoryHealth,
+  education: Colors.light.categoryEducation,
+  other: Colors.light.categoryOther,
+};
+
+export const Categories = [
+  { id: "entertainment", label: "エンタメ", icon: "play-circle" },
+  { id: "work", label: "仕事", icon: "briefcase" },
+  { id: "health", label: "健康", icon: "heart" },
+  { id: "education", label: "教育", icon: "book-open" },
+  { id: "other", label: "その他", icon: "grid" },
+] as const;
