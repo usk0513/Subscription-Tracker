@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -6,6 +6,8 @@ import {
   Pressable,
   Platform,
   Alert,
+  ScrollView,
+  FlatList,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -20,11 +22,22 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useCreateSubscription, useUpdateSubscription, useSubscription } from "@/hooks/useSubscriptions";
 import { Spacing, BorderRadius, Categories, CategoryColors } from "@/constants/theme";
+import { presetServices, PresetService, ServicePlan, servicesByCategory } from "@/constants/presetServices";
 import type { BillingCycle, CategoryId, SubscriptionInput } from "@/types/subscription";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RouteProps = RouteProp<RootStackParamList, "AddSubscription">;
+
+type Step = "choose" | "service" | "plan" | "form";
+
+const categoryLabels: Record<CategoryId, string> = {
+  entertainment: "エンタメ",
+  work: "仕事",
+  health: "健康",
+  education: "教育",
+  other: "その他",
+};
 
 export default function AddSubscriptionScreen() {
   const insets = useSafeAreaInsets();
@@ -38,6 +51,11 @@ export default function AddSubscriptionScreen() {
   
   const createMutation = useCreateSubscription();
   const updateMutation = useUpdateSubscription();
+  
+  const [step, setStep] = useState<Step>(editId ? "form" : "choose");
+  const [selectedService, setSelectedService] = useState<PresetService | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<ServicePlan | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   
   const [name, setName] = useState(existingSubscription?.name || "");
   const [price, setPrice] = useState(existingSubscription?.price?.toString() || "");
@@ -63,6 +81,77 @@ export default function AddSubscriptionScreen() {
       setManagementUrl(existingSubscription.managementUrl || "");
     }
   }, [existingSubscription]);
+  
+  const filteredServices = useMemo(() => {
+    if (!searchQuery.trim()) return presetServices;
+    const query = searchQuery.toLowerCase();
+    return presetServices.filter(
+      (s) => s.name.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
+  
+  const groupedServices = useMemo(() => {
+    const grouped: { category: CategoryId; label: string; services: PresetService[] }[] = [];
+    const categories: CategoryId[] = ["entertainment", "work", "education", "other"];
+    
+    for (const cat of categories) {
+      const services = filteredServices.filter((s) => s.category === cat);
+      if (services.length > 0) {
+        grouped.push({
+          category: cat,
+          label: categoryLabels[cat],
+          services,
+        });
+      }
+    }
+    return grouped;
+  }, [filteredServices]);
+  
+  const handleSelectService = (service: PresetService) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedService(service);
+    if (service.plans.length === 1) {
+      handleSelectPlan(service, service.plans[0]);
+    } else {
+      setStep("plan");
+    }
+  };
+  
+  const handleSelectPlan = (service: PresetService, plan: ServicePlan) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedService(service);
+    setSelectedPlan(plan);
+    setName(service.name);
+    setPrice(plan.price.toString());
+    setBillingCycle(plan.billingCycle);
+    setCategory(service.category);
+    setManagementUrl(service.managementUrl || "");
+    setStep("form");
+  };
+  
+  const handleManualEntry = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedService(null);
+    setSelectedPlan(null);
+    setStep("form");
+  };
+  
+  const handleBack = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (step === "plan") {
+      setStep("service");
+    } else if (step === "form" && selectedService) {
+      if (selectedService.plans.length > 1) {
+        setStep("plan");
+      } else {
+        setStep("service");
+      }
+    } else if (step === "form") {
+      setStep("choose");
+    } else if (step === "service") {
+      setStep("choose");
+    }
+  };
   
   const isValid = name.trim() && price && parseFloat(price) > 0;
   
@@ -105,17 +194,218 @@ export default function AddSubscriptionScreen() {
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
   };
   
-  return (
+  const renderChooseStep = () => (
+    <View style={styles.stepContainer}>
+      <ThemedText type="h3" style={styles.stepTitle}>
+        サブスクを追加
+      </ThemedText>
+      <ThemedText type="body" style={[styles.stepSubtitle, { color: theme.textSecondary }]}>
+        登録方法を選択してください
+      </ThemedText>
+      
+      <View style={styles.choiceContainer}>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setStep("service");
+          }}
+          style={({ pressed }) => [
+            styles.choiceCard,
+            {
+              backgroundColor: theme.backgroundDefault,
+              borderColor: theme.border,
+              opacity: pressed ? 0.9 : 1,
+            },
+          ]}
+          testID="button-preset"
+        >
+          <View style={[styles.choiceIconContainer, { backgroundColor: `${theme.link}15` }]}>
+            <Feather name="list" size={28} color={theme.link} />
+          </View>
+          <ThemedText type="h4" style={styles.choiceTitle}>
+            サービスから選ぶ
+          </ThemedText>
+          <ThemedText type="small" style={[styles.choiceDesc, { color: theme.textSecondary }]}>
+            Netflix, Spotify, ChatGPT など人気サービスから選択
+          </ThemedText>
+          <View style={styles.choiceArrow}>
+            <Feather name="chevron-right" size={24} color={theme.textTertiary} />
+          </View>
+        </Pressable>
+        
+        <Pressable
+          onPress={handleManualEntry}
+          style={({ pressed }) => [
+            styles.choiceCard,
+            {
+              backgroundColor: theme.backgroundDefault,
+              borderColor: theme.border,
+              opacity: pressed ? 0.9 : 1,
+            },
+          ]}
+          testID="button-manual"
+        >
+          <View style={[styles.choiceIconContainer, { backgroundColor: `${theme.textSecondary}15` }]}>
+            <Feather name="edit-3" size={28} color={theme.textSecondary} />
+          </View>
+          <ThemedText type="h4" style={styles.choiceTitle}>
+            手動で入力
+          </ThemedText>
+          <ThemedText type="small" style={[styles.choiceDesc, { color: theme.textSecondary }]}>
+            サービス名と料金を自分で入力
+          </ThemedText>
+          <View style={styles.choiceArrow}>
+            <Feather name="chevron-right" size={24} color={theme.textTertiary} />
+          </View>
+        </Pressable>
+      </View>
+    </View>
+  );
+  
+  const renderServiceStep = () => (
+    <View style={styles.stepContainer}>
+      <Pressable onPress={handleBack} style={styles.backButton} testID="button-back">
+        <Feather name="arrow-left" size={20} color={theme.link} />
+        <ThemedText style={[styles.backText, { color: theme.link }]}>戻る</ThemedText>
+      </Pressable>
+      
+      <ThemedText type="h3" style={styles.stepTitle}>
+        サービスを選択
+      </ThemedText>
+      
+      <View style={[styles.searchContainer, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}>
+        <Feather name="search" size={18} color={theme.textTertiary} />
+        <TextInput
+          style={[styles.searchInput, { color: theme.text }]}
+          placeholder="サービス名で検索..."
+          placeholderTextColor={theme.textTertiary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          testID="input-search"
+        />
+        {searchQuery.length > 0 ? (
+          <Pressable onPress={() => setSearchQuery("")}>
+            <Feather name="x" size={18} color={theme.textTertiary} />
+          </Pressable>
+        ) : null}
+      </View>
+      
+      <ScrollView 
+        style={styles.serviceList}
+        showsVerticalScrollIndicator={false}
+      >
+        {groupedServices.map((group) => (
+          <View key={group.category} style={styles.serviceGroup}>
+            <ThemedText type="small" style={[styles.groupLabel, { color: theme.textSecondary }]}>
+              {group.label}
+            </ThemedText>
+            {group.services.map((service) => (
+              <Pressable
+                key={service.id}
+                onPress={() => handleSelectService(service)}
+                style={({ pressed }) => [
+                  styles.serviceItem,
+                  {
+                    backgroundColor: theme.backgroundDefault,
+                    opacity: pressed ? 0.9 : 1,
+                  },
+                ]}
+                testID={`button-service-${service.id}`}
+              >
+                <View style={styles.serviceInfo}>
+                  <ThemedText type="body" style={styles.serviceName}>
+                    {service.name}
+                  </ThemedText>
+                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                    {service.plans.length > 1 
+                      ? `${service.plans.length}プラン` 
+                      : `¥${service.plans[0].price.toLocaleString()}/月`}
+                  </ThemedText>
+                </View>
+                <Feather name="chevron-right" size={20} color={theme.textTertiary} />
+              </Pressable>
+            ))}
+          </View>
+        ))}
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </View>
+  );
+  
+  const renderPlanStep = () => (
+    <View style={styles.stepContainer}>
+      <Pressable onPress={handleBack} style={styles.backButton} testID="button-back">
+        <Feather name="arrow-left" size={20} color={theme.link} />
+        <ThemedText style={[styles.backText, { color: theme.link }]}>戻る</ThemedText>
+      </Pressable>
+      
+      <ThemedText type="h3" style={styles.stepTitle}>
+        {selectedService?.name}
+      </ThemedText>
+      <ThemedText type="body" style={[styles.stepSubtitle, { color: theme.textSecondary }]}>
+        プランを選択してください
+      </ThemedText>
+      
+      <View style={styles.planList}>
+        {selectedService?.plans.map((plan) => (
+          <Pressable
+            key={plan.id}
+            onPress={() => handleSelectPlan(selectedService, plan)}
+            style={({ pressed }) => [
+              styles.planItem,
+              {
+                backgroundColor: theme.backgroundDefault,
+                borderColor: theme.border,
+                opacity: pressed ? 0.9 : 1,
+              },
+            ]}
+            testID={`button-plan-${plan.id}`}
+          >
+            <View style={styles.planInfo}>
+              <ThemedText type="body" style={styles.planName}>
+                {plan.name}
+              </ThemedText>
+              {plan.description ? (
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {plan.description}
+                </ThemedText>
+              ) : null}
+            </View>
+            <View style={styles.planPriceContainer}>
+              <ThemedText type="h4" style={[styles.planPrice, { color: theme.link }]}>
+                ¥{plan.price.toLocaleString()}
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                /{plan.billingCycle === "monthly" ? "月" : "年"}
+              </ThemedText>
+            </View>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+  
+  const renderFormStep = () => (
     <KeyboardAwareScrollViewCompat
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      contentContainerStyle={[
-        styles.content,
-        {
-          paddingTop: headerHeight + Spacing.xl,
-          paddingBottom: insets.bottom + Spacing.xl,
-        },
-      ]}
+      style={[styles.formContainer, { backgroundColor: theme.backgroundRoot }]}
+      contentContainerStyle={styles.formContent}
     >
+      {!editId && selectedService ? (
+        <Pressable onPress={handleBack} style={styles.backButton} testID="button-back">
+          <Feather name="arrow-left" size={20} color={theme.link} />
+          <ThemedText style={[styles.backText, { color: theme.link }]}>戻る</ThemedText>
+        </Pressable>
+      ) : null}
+      
+      {selectedService && selectedPlan ? (
+        <View style={[styles.selectedBadge, { backgroundColor: `${theme.link}15` }]}>
+          <Feather name="check-circle" size={16} color={theme.link} />
+          <ThemedText style={[styles.selectedBadgeText, { color: theme.link }]}>
+            {selectedService.name} - {selectedPlan.name}
+          </ThemedText>
+        </View>
+      ) : null}
+      
       <View style={styles.section}>
         <ThemedText type="small" style={[styles.label, { color: theme.textSecondary }]}>
           アプリ/サービス名
@@ -335,14 +625,163 @@ export default function AddSubscriptionScreen() {
       </View>
     </KeyboardAwareScrollViewCompat>
   );
+  
+  return (
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.backgroundRoot,
+          paddingTop: headerHeight + Spacing.lg,
+          paddingBottom: insets.bottom + Spacing.lg,
+        },
+      ]}
+    >
+      {step === "choose" ? renderChooseStep() : null}
+      {step === "service" ? renderServiceStep() : null}
+      {step === "plan" ? renderPlanStep() : null}
+      {step === "form" ? renderFormStep() : null}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  stepContainer: {
+    flex: 1,
     paddingHorizontal: Spacing.lg,
+  },
+  stepTitle: {
+    marginBottom: Spacing.xs,
+  },
+  stepSubtitle: {
+    marginBottom: Spacing.xl,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+    gap: Spacing.xs,
+  },
+  backText: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  choiceContainer: {
+    gap: Spacing.md,
+  },
+  choiceCard: {
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  choiceIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.lg,
+  },
+  choiceTitle: {
+    marginBottom: Spacing.xs,
+  },
+  choiceDesc: {
+    lineHeight: 20,
+  },
+  choiceArrow: {
+    position: "absolute",
+    right: Spacing.lg,
+    top: "50%",
+    transform: [{ translateY: -12 }],
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    height: 44,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+  },
+  serviceList: {
+    flex: 1,
+  },
+  serviceGroup: {
+    marginBottom: Spacing.xl,
+  },
+  groupLabel: {
+    fontWeight: "600",
+    marginBottom: Spacing.sm,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  serviceItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.xs,
+  },
+  serviceInfo: {
+    flex: 1,
+  },
+  serviceName: {
+    fontWeight: "500",
+    marginBottom: 2,
+  },
+  planList: {
+    gap: Spacing.md,
+  },
+  planItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  planInfo: {
+    flex: 1,
+  },
+  planName: {
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  planPriceContainer: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  planPrice: {
+    fontWeight: "700",
+  },
+  formContainer: {
+    flex: 1,
+  },
+  formContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xl,
+  },
+  selectedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    alignSelf: "flex-start",
+    marginBottom: Spacing.xl,
+    gap: Spacing.xs,
+  },
+  selectedBadgeText: {
+    fontSize: 13,
+    fontWeight: "500",
   },
   section: {
     marginBottom: Spacing.xl,
