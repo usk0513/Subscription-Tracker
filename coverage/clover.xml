@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1769359133101" clover="3.2.0">
-  <project timestamp="1769359133102" name="All files">
+<coverage generated="1769359824943" clover="3.2.0">
+  <project timestamp="1769359824943" name="All files">
     <metrics statements="120" coveredstatements="68" conditionals="44" coveredconditionals="20" methods="43" coveredmethods="22" elements="207" coveredelements="110" complexity="0" loc="120" ncloc="120" packages="3" files="9" classes="9"/>
     <package name="hooks">
       <metrics statements="29" coveredstatements="0" conditionals="10" coveredconditionals="0" methods="16" coveredmethods="0"/>
@@ -79,7 +79,7 @@
       </file>
       <file name="storage.ts" path="/home/runner/workspace/client/lib/storage.ts">
         <metrics statements="28" coveredstatements="28" conditionals="8" coveredconditionals="8" methods="9" coveredmethods="9"/>
-        <line num="4" count="1" type="stmt"/>
+        <line num="4" count="2" type="stmt"/>
         <line num="7" count="14" type="stmt"/>
         <line num="11" count="27" type="stmt"/>
         <line num="12" count="27" type="stmt"/>
