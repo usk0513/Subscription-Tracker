@@ -5,6 +5,7 @@ import { Feather } from "@expo/vector-icons";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import AddSubscriptionScreen from "@/screens/AddSubscriptionScreen";
 import SubscriptionDetailScreen from "@/screens/SubscriptionDetailScreen";
+import FeedbackScreen from "@/screens/FeedbackScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -12,6 +13,7 @@ export type RootStackParamList = {
   Main: undefined;
   AddSubscription: { editId?: string } | undefined;
   SubscriptionDetail: { id: string };
+  Feedback: { serviceName?: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -46,6 +48,19 @@ export default function RootStackNavigator() {
         options={{
           headerTitle: "詳細",
         }}
+      />
+      <Stack.Screen
+        name="Feedback"
+        component={FeedbackScreen}
+        options={({ navigation }) => ({
+          presentation: "modal",
+          headerTitle: "フィードバック",
+          headerLeft: () => (
+            <HeaderButton onPress={() => navigation.goBack()}>
+              <Feather name="x" size={24} color={theme.text} />
+            </HeaderButton>
+          ),
+        })}
       />
     </Stack.Navigator>
   );

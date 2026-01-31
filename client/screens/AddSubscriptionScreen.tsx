@@ -382,6 +382,20 @@ export default function AddSubscriptionScreen() {
           </Pressable>
         ))}
       </View>
+      
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate("Feedback", { serviceName: selectedService?.name });
+        }}
+        style={styles.feedbackLink}
+        testID="button-feedback"
+      >
+        <Feather name="message-circle" size={16} color={theme.textSecondary} />
+        <ThemedText type="small" style={[styles.feedbackLinkText, { color: theme.textSecondary }]}>
+          プランが見つからない場合
+        </ThemedText>
+      </Pressable>
     </View>
   );
   
@@ -872,5 +886,16 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  feedbackLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    gap: Spacing.xs,
+  },
+  feedbackLinkText: {
+    fontSize: 14,
   },
 });
