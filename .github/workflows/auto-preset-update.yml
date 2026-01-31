@@ -1,0 +1,42 @@
+name: Auto Preset Update with Claude Code
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  update-preset:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.issue.user.login == 'usk0513' &&
+      contains(github.event.issue.labels.*.name, 'feedback') &&
+      contains(github.event.issue.labels.*.name, 'preset-request')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Claude Code Action
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          direct_prompt: |
+            以下のIssueに基づいて、プリセットサービスデータを更新してください。
+
+            ## Issue内容
+            タイトル: ${{ github.event.issue.title }}
+            本文:
+            ${{ github.event.issue.body }}
+
+            ## 作業内容
+            1. client/constants/presets/ フォルダ内の適切なカテゴリファイルを確認
+            2. リクエストされたサービス/プランを追加または更新
+            3. 変更内容を説明するコミットメッセージを作成
+          allowed_tools: |
+            Bash
+            Edit
+            Glob
+            Grep
+            Read
+            Write
+          timeout_minutes: 10
