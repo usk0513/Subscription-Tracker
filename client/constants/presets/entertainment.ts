@@ -79,6 +79,7 @@ export const entertainmentServices: PresetService[] = [
       { id: "spotify-student", name: "Student", price: 480, billingCycle: "monthly" },
       { id: "spotify-duo", name: "Duo", price: 1280, billingCycle: "monthly" },
       { id: "spotify-family", name: "Family", price: 1580, billingCycle: "monthly" },
+      { id: "spotify-family-6", name: "ファミリープラン 6人用", price: 1980, billingCycle: "monthly" },
     ],
   },
   {
