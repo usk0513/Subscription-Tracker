@@ -38,10 +38,21 @@ jobs:
             本文:
             ${{ github.event.issue.body }}
 
+            ## ルール（重要）
+            - 変更は「プリセット追加/更新」に限定（無関係なリファクタ/フォーマット変更はしない）
+            - 追加/更新した内容は、既存のデータ構造（PresetService/ServicePlan）に合わせる
+            - 可能なら価格・請求サイクル・管理URLを埋める。分からない場合は推測せず、TODOコメントを残す
+
             ## 作業内容
-            1. client/constants/presets/ フォルダ内の適切なカテゴリファイルを確認
+            1. client/constants/presets/ フォルダ内の適切なカテゴリファイルを特定
             2. リクエストされたサービス/プランを追加または更新
-            3. 変更内容を説明するコミットメッセージを作成
+            3. 型エラーが出ないことを確認（必要なら最小限の修正）
+            4. 変更内容が分かるようにPR本文に書ける要点をまとめる（箇条書き）
+
+            ## ブランチ/コミット/PR
+            - ブランチ名は: preset-update/issue-${{ github.event.issue.number }}
+            - コミットメッセージ案（1行）も用意する（例: "Add preset for <service>"）
+            - ただし実際のコミット/PR作成は後続ステップが行うため、あなたはファイル変更に集中してOK
           allowed_tools: |
             Bash
             Edit
@@ -50,3 +61,21 @@ jobs:
             Read
             Write
           timeout_minutes: 10
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: preset-update/issue-${{ github.event.issue.number }}
+          delete-branch: true
+          commit-message: "Auto-update presets (issue #${{ github.event.issue.number }})"
+          title: "Auto update presets for issue #${{ github.event.issue.number }}"
+          body: |
+            This PR was generated automatically from issue #${{ github.event.issue.number }}.
+
+            - Issue title: ${{ github.event.issue.title }}
+
+            Please review the changes.
+          labels: |
+            automated
+            preset-update
